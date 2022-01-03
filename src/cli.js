@@ -23,9 +23,9 @@ InputHandler = (model) => async (input) => {
             // console.log(model.dumpUuids())
             model.saveToStorage()
             break;
-        // type validate <uuid> to validate relationships
+        // validate all relationships in model
         case "validate":
-            ValidateRelationships(args[0], model)
+            ValidateRelationships(model)
             break
         case "list":
         case "ls":
@@ -112,28 +112,29 @@ function loadPaired(content, model) {
     })
 }
 
-function ValidateRelationships(uuid, model) {
-    const person = model.getPersonByUuid(uuid);
-    //console.log(person);
+function ValidateRelationships(model) {
+    let people = model.getPeople();
+    //console.log("get people: ", people);
+    for (let i = 0; i < people.length; i++) {
+        const person = people[i];
+        const angelID = person.angel;
+        const angelValid = validateAngel(person.uuid, angelID, model);
 
-    const angelID = person.angel;
-    const angelValid = validateAngel(uuid, angelID, model);
-
-    const mortalID = person.mortal;
-    const mortalValid = validateMortal(uuid, mortalID, model);
-
-    if (angelValid && mortalValid) {
-        console.log("relationships valid");
-    } else {
-        console.log("invalid relationship detected");
+        const mortalID = person.mortal;
+        const mortalValid = validateMortal(person.uuid, mortalID, model);
+        
+        if (!angelValid || !mortalValid) {
+            console.log(`relationship invalid`);
+            return false;
+        }
     }
+    console.log(`relationships valid`);
 }
 
 // check if my angel's mortal is me
 function validateAngel(myID, angelID, model) {
     const myAngel = model.getPersonByUuid(angelID);
     if (myAngel.mortal == myID) {
-        //console.log("relationship valid");
         return true;
     } else {
         console.log("invalid relationship with angel");
@@ -145,7 +146,6 @@ function validateAngel(myID, angelID, model) {
 function validateMortal(myID, mortalID, model) {
     const myMortal = model.getPersonByUuid(mortalID);
     if (myMortal.angel == myID) {
-        //console.log("relationship valid");
         return true;
     } else {
         console.log("invalid relationship with mortal");
