@@ -114,6 +114,7 @@ function loadPaired(content, model) {
 
 function ValidateRelationships(model) {
     let people = model.getPeople();
+    let validity = true;
     //console.log("get people: ", people);
     for (let i = 0; i < people.length; i++) {
         const person = people[i];
@@ -124,32 +125,40 @@ function ValidateRelationships(model) {
         const mortalValid = validateMortal(person.uuid, mortalID, model);
         
         if (!angelValid || !mortalValid) {
-            console.log(`relationship invalid`);
-            return false;
+            validity = false
+            console.log(`${person.uuid}, ${person.name}: relationship invalid`);
         }
     }
-    console.log(`relationships valid`);
+    return validity ? console.log(`relationships valid`) : console.log(`relationships invalid`);
 }
 
 // check if my angel's mortal is me
 function validateAngel(myID, angelID, model) {
     const myAngel = model.getPersonByUuid(angelID);
-    if (myAngel.mortal == myID) {
-        return true;
-    } else {
-        console.log("invalid relationship with angel");
+    // handle null cases
+    if (myAngel === null) { 
+        console.log(myID + ": angel absent");
         return false;
+    } else if (myAngel.mortal != myID){
+        console.log(myID + ": invalid relationship with angel");
+        return false;
+    } else {
+        return true;
     }
 }
 
 // check if my mortal's angel is me
 function validateMortal(myID, mortalID, model) {
     const myMortal = model.getPersonByUuid(mortalID);
-    if (myMortal.angel == myID) {
-        return true;
-    } else {
-        console.log("invalid relationship with mortal");
+    // handle null cases
+    if (myMortal === null) {
+        console.log(myID + ": mortal absent");
+        return false; 
+    } else if (myMortal.angel != myID) {
+        console.log(myID + ": invalid relationship with mortal");
         return false;
+    } else {
+        return true;
     }
 }
 
