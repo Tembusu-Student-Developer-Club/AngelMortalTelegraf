@@ -84,4 +84,46 @@ Settings = (isAngel = true, otherBot) => async (ctx, next) => {
     await next()
 }
 
-module.exports = {UserId, OnlyPrivate, ErrorHandler, RequireRegister, WithModel, Settings, CodeFilter}
+Replies = async (ctx, next) => {
+    const target = ctx.message.reply_to_message
+    if (!target) {
+        //Not a reply
+        await next()
+        return
+    }
+    if (!target.text) {
+        //not replying to a pure text message or not sending pure text
+        ctx.reply(messages.ReplyToWarning)
+        await next()
+        return
+    }
+    if (ctx.updateSubTypes[0] !== "text"
+        && ctx.updateSubTypes[0] !== "animation"
+        && ctx.updateSubTypes[0] !== "sticker") {
+        //not replying to a pure text message or not sending pure text
+        ctx.reply(messages.ReplyWithWarning(ctx.updateSubTypes[0]))
+        await next()
+        return
+    }
+
+    const MAX_QUOTE_LENGTH = 250
+    const name = target.from.username == ctx.botInfo.username ? "you" : ctx.chatAs
+    const strs = ["\n\n| In reply to: ", name, " said:\n| "]
+    const quotedText = target.text
+        .split(strs[0])[0]
+        .substr(0, MAX_QUOTE_LENGTH)
+    strs.push(quotedText)
+    ctx.replyText = strs.join('')
+    await next()
+}
+
+module.exports = {
+    UserId,
+    OnlyPrivate,
+    ErrorHandler,
+    RequireRegister,
+    WithModel,
+    Settings,
+    CodeFilter,
+    Replies
+}
