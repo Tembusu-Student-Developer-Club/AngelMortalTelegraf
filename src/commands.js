@@ -86,7 +86,10 @@ AnimationHandler = async (ctx) => {
     }
     const msg = ctx.update.message
     const fileLink = await ctx.telegram.getFileLink(msg.animation.file_id)
-    return await ctx.otherBot.telegram.sendAnimation(target.telegramId, {url: fileLink})
+    await ctx.otherBot.telegram.sendAnimation(target.telegramId, {url: fileLink})
+    if (ctx.replyText) {
+        await ctx.otherBot.telegram.sendMessage(target.telegramId, ctx.replyText)
+    }
 }
 
 DocumentHandler = async (ctx) => {
@@ -97,7 +100,7 @@ DocumentHandler = async (ctx) => {
     }
     const msg = ctx.update.message
     const fileLink = await ctx.telegram.getFileLink(msg.document.file_id)
-    return await ctx.otherBot.telegram.sendDocument(target.telegramId, {
+    await ctx.otherBot.telegram.sendDocument(target.telegramId, {
         url: fileLink,
         filename: msg.document.file_name
     })
@@ -114,7 +117,11 @@ MessageHandler = async (ctx) => {
         }
         return
     }
-    return await ctx.otherBot.telegram.sendMessage(target.telegramId, ctx.message.text)
+    let outText = ctx.message.text
+    if (ctx.replyText) {
+        outText += ctx.replyText
+    }
+    return await ctx.otherBot.telegram.sendMessage(target.telegramId, outText)
 }
 
 StickerHandler = async (ctx) => {
@@ -124,6 +131,9 @@ StickerHandler = async (ctx) => {
         return
     }
     await ctx.otherBot.telegram.sendSticker(target.telegramId, ctx.message.sticker.file_id)
+    if (ctx.replyText) {
+        await ctx.otherBot.telegram.sendMessage(target.telegramId, ctx.replyText)
+    }
 }
 
 PhotoHandler = async (ctx) => {

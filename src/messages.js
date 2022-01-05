@@ -18,4 +18,6 @@ module.exports = {
     RegisteredNotifier: (chatTarget) => `Your ${chatTarget} has registered with the bot on Telegram. Happy chatting!`,
     UnregisteredNotifier: (chatTarget) => `Your ${chatTarget} has not registered with the bot on Telegram. We'll let you know once they've registered!`,
     NotRegistered: "Not registered",
+    ReplyToWarning: `Warning: you can only reply to text. Other content (eg replying to a sticker) are not reflected as replies. However, your partner should still receive the content of the message. It seems like the message you're replying to is not text.`,
+    ReplyWithWarning: (type) => `Warning: you can only using text, gifs, or stickers. Other content (eg replying with a video) are not reflected as replies. However, your partner should still receive the content of the message. It seems like you're sending a ${type}.`,
 };
