@@ -78,6 +78,31 @@ DeregisterHandler = async (ctx) => {
     await ctx.otherBot.telegram.sendMessage(telegramId, messages.DeregisterSuccess)
 }
 
+AnimationHandler = async (ctx) => {
+    const target = ctx.isAngel ? ctx.angel : ctx.mortal
+    if (!target.isRegistered()) {
+        await ctx.reply(messages.UnregisteredTarget(ctx.chatTarget))
+        return
+    }
+    const msg = ctx.update.message
+    const fileLink = await ctx.telegram.getFileLink(msg.animation.file_id)
+    return await ctx.otherBot.telegram.sendAnimation(target.telegramId, {url: fileLink})
+}
+
+DocumentHandler = async (ctx) => {
+    const target = ctx.isAngel ? ctx.angel : ctx.mortal
+    if (!target.isRegistered()) {
+        await ctx.reply(messages.UnregisteredTarget(ctx.chatTarget))
+        return
+    }
+    const msg = ctx.update.message
+    const fileLink = await ctx.telegram.getFileLink(msg.document.file_id)
+    return await ctx.otherBot.telegram.sendDocument(target.telegramId, {
+        url: fileLink,
+        filename: msg.document.file_name
+    })
+}
+
 MessageHandler = async (ctx) => {
     const target = ctx.isAngel ? ctx.angel : ctx.mortal
     if (!target || !target.isRegistered()) {
@@ -88,18 +113,6 @@ MessageHandler = async (ctx) => {
             await ctx.reply(messages.UnregisteredTarget(ctx.chatTarget))
         }
         return
-    }
-    const msg = ctx.update.message
-    if (ctx.updateSubTypes.indexOf("animation") !== -1) {
-        const fileLink = await ctx.telegram.getFileLink(msg.animation.file_id)
-        return await ctx.otherBot.telegram.sendAnimation(target.telegramId, {url: fileLink})
-    }
-    if (ctx.updateSubTypes.indexOf("document") !== -1) {
-        const fileLink = await ctx.telegram.getFileLink(msg.document.file_id)
-        return await ctx.otherBot.telegram.sendDocument(target.telegramId, {
-            url: fileLink,
-            filename: msg.document.file_name
-        })
     }
     return await ctx.otherBot.telegram.sendMessage(target.telegramId, ctx.message.text)
 }
@@ -205,5 +218,7 @@ module.exports = {
     PhotoHandler,
     VideoHandler,
     VideoNoteHandler,
-    VoiceHandler
+    VoiceHandler,
+    AnimationHandler,
+    DocumentHandler,
 }
