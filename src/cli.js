@@ -23,6 +23,10 @@ InputHandler = (model) => async (input) => {
             // console.log(model.dumpUuids())
             model.saveToStorage()
             break;
+        // validate all relationships in model
+        case "validate":
+            ValidateRelationships(model)
+            break
         case "list":
         case "ls":
         case "show":
@@ -106,6 +110,56 @@ function loadPaired(content, model) {
             mortal.angel = angel.uuid
         }
     })
+}
+
+function ValidateRelationships(model) {
+    let people = model.getPeople();
+    let validity = true;
+    //console.log("get people: ", people);
+    for (let i = 0; i < people.length; i++) {
+        const person = people[i];
+        const angelID = person.angel;
+        const angelValid = validateAngel(person.uuid, angelID, model);
+
+        const mortalID = person.mortal;
+        const mortalValid = validateMortal(person.uuid, mortalID, model);
+        
+        if (!angelValid || !mortalValid) {
+            validity = false
+            console.log(`${person.uuid}, ${person.name}: relationship invalid`);
+        }
+    }
+    return validity ? console.log(`relationships valid`) : console.log(`relationships invalid`);
+}
+
+// check if my angel's mortal is me
+function validateAngel(myID, angelID, model) {
+    const myAngel = model.getPersonByUuid(angelID);
+    // handle null cases
+    if (myAngel === null) { 
+        console.log(myID + ": angel absent");
+        return false;
+    } else if (myAngel.mortal != myID){
+        console.log(myID + ": invalid relationship with angel");
+        return false;
+    } else {
+        return true;
+    }
+}
+
+// check if my mortal's angel is me
+function validateMortal(myID, mortalID, model) {
+    const myMortal = model.getPersonByUuid(mortalID);
+    // handle null cases
+    if (myMortal === null) {
+        console.log(myID + ": mortal absent");
+        return false; 
+    } else if (myMortal.angel != myID) {
+        console.log(myID + ": invalid relationship with mortal");
+        return false;
+    } else {
+        return true;
+    }
 }
 
 function loadCircular(content) {
