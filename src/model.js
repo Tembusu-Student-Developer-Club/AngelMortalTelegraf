@@ -14,6 +14,28 @@ class Model {
         this.people = [];
     }
 
+    resetConfirm() {
+        console.log("Resetting Confirm!")
+        this.people.forEach((person) => {
+            person.confirm = false;
+        })
+        this.saveToStorage()
+    }
+
+    resetConfirmAtMidnight() {
+        // Reset every midnight
+        var now = new Date()
+        var night = new Date()
+        night.setDate(new Date().getDate() + 1)
+        night.setHours(0, 0, 0, 0)
+        var msToMidnight = night.getTime() - now.getTime();
+
+        setTimeout(() => {
+            this.resetConfirm();
+            this.resetConfirmAtMidnight();
+        }, msToMidnight);
+    }
+
     addPerson(person) {
         person.uuid = this.generateNewUuid();
         this.people.push(person);
@@ -113,6 +135,8 @@ class Person {
         this.telegramId = ""
         this.angel = null;
         this.mortal = null;
+        this.facts = [];
+        this.confirm = false;
         return this;
     }
 
@@ -134,6 +158,7 @@ class Person {
     deregister() {
         this.telegramId = "";
         this.username = "";
+        this.confirm = false;
     }
 
     isRegistered() {
@@ -149,6 +174,8 @@ class Person {
             telegramId: this.telegramId,
             angel: this.angel || null,
             mortal: this.mortal || null,
+            facts: this.facts,
+            confirm: this.confirm
         }
     }
 
@@ -161,7 +188,8 @@ class Person {
         person.telegramId = obj.telegramId
         person.angel = obj.angel
         person.mortal = obj.mortal
-
+        person.facts = obj.facts
+        person.confirm = obj.confirm
         return person
     }
 }

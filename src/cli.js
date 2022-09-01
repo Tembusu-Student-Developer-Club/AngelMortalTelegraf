@@ -1,6 +1,7 @@
 const fs = require('fs')
 const storage = require("node-persist");
 const {Person, Model} = require("./model");
+const ExcelJS = require("exceljs");
 
 InputHandler = (model) => async (input) => {
     const tokens = input.trim().split(" ")
@@ -73,39 +74,98 @@ async function Announce(model) {
     console.log('wip command')
 }
 
-// loadpaired data.txt
-function loadPaired(content, model) {
-    content.split("\n").forEach(line => {
-        const name = line.split(",")[0].trim()
-        if (model.getPersonByName(name)) {
-            console.error("Error: name " + name + " is already used!");
-            return;
-        }
-        if (name !== "") {
-            const newPerson = new Person().withName(name)
-            model.addPerson(newPerson)
-            console.log(newPerson.name + " - " + newPerson.uuid);
-        }
-    })
-    //TODO: print new uuids
+// loadpaired data.txt FROM TXT
+// function loadPaired(content, model) {
+//     content.split("\n").forEach(line => {
+//         const name = line.split(",")[0].trim()
+//         if (model.getPersonByName(name)) {
+//             console.error("Error: name " + name + " is already used!");
+//             return;
+//         }
+//         if (name !== "") {
+//             const newPerson = new Person().withName(name)
+//             model.addPerson(newPerson)
+//             console.log(newPerson.name + " - " + newPerson.uuid);
+//         }
+//     })
+//     //TODO: print new uuids
 
-    content.split("\n").forEach(line => {
-        if (line.trim() === "") {
+//     content.split("\n").forEach(line => {
+//         if (line.trim() === "") {
+//             return;
+//         }
+//         const angelName = line.split(",")[0].trim()
+//         const mortalName = line.split(",")[1].trim()
+//         if (angelName === "" || mortalName === "") {
+//             console.error("Invalid line: " + line)
+//         } else {
+//             console.log(`${angelName}-${mortalName}`)
+//             const angel = model.getPersonByName(angelName)
+//             const mortal = model.getPersonByName(mortalName)
+//             // console.log(a, m)
+//             angel.mortal = mortal.uuid
+//             mortal.angel = angel.uuid
+//         }
+//     })
+// }
+
+// loadpaired data.txt FROM EXCEL
+async function loadPaired(workbook, model) {
+    worksheet = workbook.worksheets[0]
+    worksheet.eachRow(function(row, rowNumber) {
+        // Row 1 is the headers
+        if (rowNumber == 1) {
+            return
+        }
+        const angelName = row.getCell('A').value
+        if (model.getPersonByName(angelName)) {
+            console.error("Error: The angel's name " + angelName + " is already used!");
             return;
         }
-        const angelName = line.split(",")[0].trim()
-        const mortalName = line.split(",")[1].trim()
-        if (angelName === "" || mortalName === "") {
-            console.error("Invalid line: " + line)
-        } else {
-            console.log(`${angelName}-${mortalName}`)
-            const angel = model.getPersonByName(angelName)
-            const mortal = model.getPersonByName(mortalName)
-            // console.log(a, m)
-            angel.mortal = mortal.uuid
-            mortal.angel = angel.uuid
+        if (angelName == "") {
+            console.error("Error: The name at rowNumber " + rowNumber + " is empty!");
+            return;
         }
-    })
+        const newPerson = new Person().withName(angelName)
+        model.addPerson(newPerson)
+        console.log(newPerson.name + " - " + newPerson.uuid);
+    });
+
+    worksheet.eachRow(function(row, rowNumber) {
+        if (rowNumber == 1) {
+            return
+        }
+        const angelName = row.getCell('A').value
+        const angel = model.getPersonByName(angelName)
+        row.eachCell(function(cell, colNumber) {
+            // console.log('Cell ' + colNumber + ' = ' + cell.value)
+            // First column contains angelName
+            if (colNumber == 1) {
+                return
+            }
+            // Cell contains mortal name
+            if (colNumber == 2) {
+                const mortalName = cell.value;
+                if (mortalName === "") {
+                    console.error(`Invalid mortal name at row ${rowNumber}, col ${colNumber}`);
+                    return;
+                }
+                console.log(`${angelName}-${mortalName}`)
+                const mortal = model.getPersonByName(mortalName)
+                // console.log(a, m)
+                angel.mortal = mortal.uuid
+                mortal.angel = angel.uuid
+                return;
+            }
+            // Cell contains fun fact about the person
+            if (colNumber > 2 && colNumber < 8) {
+                angel.facts.push(cell.value)
+                return
+            }
+            console.error(`Error: Unexpected value at row: ${rowNumber}, col: ${colNumber}`);
+        })
+        // console.log(angel)
+    });
 }
 
 function loadCircular(content) {
@@ -124,7 +184,9 @@ function loadCircular(content) {
 
 async function LoadCommand(path, paired = false, model) {
     console.log(`Loading data from ${path}`)
-    const content = fs.readFileSync(path, {encoding: "utf8"});
+    // const content = fs.readFileSync(path, {encoding: "utf8"});
+    const content = new ExcelJS.Workbook();
+    await content.xlsx.readFile(path)
 
     paired ? loadPaired(content, model) : loadCircular(content)
 }
